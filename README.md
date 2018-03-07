@@ -44,9 +44,9 @@ The following steps, you must do manually for increase site speed:
 		</IfModule>  
   
 *** Server response time  
-	Enable System Debug or Profiler, then check profiler for get slow extensions.  
-	If needed, enable caching for get speed.  
-	If it still slow, then, seems your hosting provider server are slow or huge loaded.  
+		Enable System Debug or Profiler, then check profiler for get slow extensions.  
+		If needed, enable caching for get speed.  
+		If it still slow, then, seems your hosting provider server are slow or huge loaded.  
   	
 *** Serve static content from a cookieless domain (optional)  
-	Create a subdomain using cPanel for the static content  
+		Create a subdomain using cPanel for the static content  
