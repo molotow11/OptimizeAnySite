@@ -14,95 +14,132 @@ class SiteFaster {
 	}
 	
 	function prepareInlineScripts() {
-		//can use skipMove attribute for the script tag for skip moving
-		preg_match_all("/<script((?:(?!src=|skipMove).)*?)>(.*?)<\/script>/smix", $this->site_code, $matches);
+		$pattern = "/<script((?:(?!src=|{$this->skipMove}).)*?)>(.*?)<\/script>/smix";
+		preg_match_all($pattern, $this->site_code, $matches);
 		if(count($matches[0])) {
-			$this->site_code = preg_replace("/<script((?:(?!src=|skipMove).)*?)>(.*?)<\/script>/smix", "", $this->site_code);
+			$this->site_code = preg_replace($pattern, "", $this->site_code);
 			$this->site_code = str_replace("</body>", implode("\r\n", $matches[0]) . "\r\n</body>", $this->site_code);
 		}		
 	}
 	
 	function prepareScriptTags() {
-		preg_match_all("#<script (async|src=|type=(\"|')text/javascript(\"|') src=)(.*?)>(.*?)</script>#is", $this->site_code, $matches);
-		if(count($matches[0])) {
-			$skip_scripts = array(
-				0 => "html5.js",
-			);
-			$append_skipped = Array();
-			foreach($matches[0] as $k=>$script) {
-				foreach($skip_scripts as $j=>$skip) {
-					if(strpos($script, $skip) !== false) {
-						$append_skipped[$j] = $matches[0][$k];
-						unset($matches[0][$k]);
+			if(count($this->move_scripts_list)) {
+				$list = implode("|", $this->move_scripts_list);
+				$pattern = "/<script[^<]*({$list})[^<]*>[^<]*<\/script>/";
+				preg_match_all($pattern, $this->site_code, $matches);
+				if(count($matches[0])) {
+					$sorted = Array();
+					foreach($matches[0] as $k=>$script) {
+						foreach($this->move_scripts_list as $j=>$moved) {
+							if(strpos($script, $moved) !== false) {
+								$sorted[$j] = $matches[0][$k];
+							}
+						}
 					}
+					ksort($sorted);	
+					$this->site_code = preg_replace($pattern, "", $this->site_code);
+					$this->site_code = str_replace("</body>", implode("\r\n", $sorted) . "\r\n</body>", $this->site_code);
 				}
 			}
-			ksort($append_skipped);
-			
-			$this->site_code = preg_replace("#<script (async|src=|type=(\"|')text/javascript(\"|') src=)(.*?)>(.*?)</script>#is", "", $this->site_code);
-			$this->site_code = str_replace("</body>", implode("\r\n", $matches[0]) . "\r\n</body>", $this->site_code);
-		}
+			else {
+				$pattern = "#<script (async|src=|type=(\"|')text/javascript(\"|') src=)(.*?)>(.*?)</script>#is";
+				preg_match_all($pattern, $this->site_code, $matches);
+				if(count($matches[0])) {
+					$append_skipped = Array();
+					foreach($matches[0] as $k=>$script) {
+						foreach($this->skip_scripts as $j=>$skip) {
+							if(strpos($script, $skip) !== false) {
+								$append_skipped[$j] = $matches[0][$k];
+								unset($matches[0][$k]);
+							}
+						}
+					}
+					ksort($append_skipped);					
+					$this->site_code = preg_replace($pattern, "", $this->site_code);
+					$this->site_code = str_replace("</body>", implode("\r\n", $matches[0]) . "\r\n</body>", $this->site_code);
+					$this->site_code = str_replace("</head>", implode("\r\n", $append_skipped) . "\r\n</head>", $this->site_code);
+				}
+			}
 	}
 	
 	function prepareInlineStyles() {
-		//can use skipMove attribute for the script tag for skip moving
-		preg_match_all("/<style((?:(?!src=|skipMove).)*?)>(.*?)<\/style>/smix", $this->site_code, $matches);
+		$pattern = "/<style((?:(?!src=|{$this->skipMove}).)*?)>(.*?)<\/style>/smix";
+		preg_match_all($pattern, $this->site_code, $matches);
 		if(count($matches[0])) {
-			$this->site_code = preg_replace("/<style((?:(?!src=|skipMove).)*?)>(.*?)<\/style>/smix", "", $this->site_code);
+			$this->site_code = preg_replace($pattern, "", $this->site_code);
 			$this->site_code = str_replace("</body>", implode("\r\n", $matches[0]) . "\r\n</body>", $this->site_code);
 		}		
 	}
 	
 	function prepareStyleTags() {
-		preg_match_all("#<link ([^>]*rel=(\"|\')stylesheet(\"|\'))[^>]*>#is", $this->site_code, $matches);
-		if(count($matches[0])) {
-			$skip_styles = array(
-				0 => "bootstrap.css",
-				1 => "template.css",
-				//2 => "style.css",
-			);
-			$append_skipped = Array();
-			foreach($matches[0] as $k=>$style) {
-				foreach($skip_styles as $j=>$skip) {
-					if(strpos($style, $skip) !== false) {
-						$append_skipped[$j] = $matches[0][$k];
-						unset($matches[0][$k]);
+		if(count($this->move_styles_list)) {
+			$list = implode("|", $this->move_styles_list);
+			$pattern = "/<link [^<]*({$list})[^<]* \/>/";
+			preg_match_all($pattern, $this->site_code, $matches);
+			if(count($matches[0])) {
+				$sorted = Array();
+				foreach($matches[0] as $k=>$script) {
+					foreach($this->move_styles_list as $j=>$moved) {
+						if(strpos($script, $moved) !== false) {
+							$sorted[$j] = $matches[0][$k];
+						}
 					}
 				}
+				ksort($sorted);	
+				$this->site_code = preg_replace($pattern, "", $this->site_code);
+				$this->site_code = str_replace("</body>", implode("\r\n", $sorted) . "\r\n</body>", $this->site_code);
 			}
-			ksort($append_skipped);
-			$this->site_code = preg_replace("#<link ([^>]*rel=(\"|\')stylesheet(\"|\'))[^>]*>#is", "", $this->site_code);
-			$this->site_code = str_replace("</head>", implode("\r\n", $append_skipped) . "\r\n</head>", $this->site_code);
-			$this->site_code = str_replace("</body>", implode("\r\n", $matches[0]) . "\r\n</body>", $this->site_code);
+		}
+		else {		
+			$pattern = "#<link ([^>]*rel=(\"|\')stylesheet(\"|\'))[^>]*>#is";
+			preg_match_all($pattern, $this->site_code, $matches);
+			if(count($matches[0])) {
+				$append_skipped = Array();
+				foreach($matches[0] as $k=>$style) {
+					foreach($this->skip_styles as $j=>$skip) {
+						if(strpos($style, $skip) !== false) {
+							$append_skipped[$j] = $matches[0][$k];
+							unset($matches[0][$k]);
+						}
+					}
+				}
+				ksort($append_skipped);
+				$this->site_code = preg_replace($pattern, "", $this->site_code);
+				$this->site_code = str_replace("</body>", implode("\r\n", $matches[0]) . "\r\n</body>", $this->site_code);
+				$this->site_code = str_replace("</head>", implode("\r\n", $append_skipped) . "\r\n</head>", $this->site_code);
+			}
 		}
 	}
 	
 	function OptimizeImages() {
-		$SiteRoot = $_SERVER['SCRIPT_URL'];
 		$FileRoot = $_SERVER['DOCUMENT_ROOT'];
-		$SavePath = $FileRoot . $SiteRoot . "OptimizedImages/";
+		$parts = explode("/", $_SERVER['SCRIPT_NAME']);
+		$SiteRoot = count($parts) > 2 ? $parts[count($parts) - 2] : $parts[0];
+		$SavePath = $FileRoot . '/' . $SiteRoot . '/OptimizedImages/';
 		
 		//create images folder
 		if(!file_exists($SavePath)) {
 			mkdir($SavePath, 0777, true);
-		}		
-		preg_match_all("#{$SiteRoot}[^'\");]*(.jpg|.png)#is", $this->site_code, $matches);
+		}	
+
+		preg_match_all("#{$SiteRoot}[^'\");]*(.jpg|.jpeg|.png)#is", $this->site_code, $matches);
 		foreach($matches[0] as $link) {
 			if(count(explode(" ", $link)) > 1) continue; //disable for srcset images
-			$FilePath = $FileRoot . $link;
-			$FileName = explode("/", $link);
-			$FileName = $FileName[count($FileName) - 1];
+			$FilePath = $FileRoot . '/' . $link;
+			$parts = explode("/", $link);
+			$FileName = $parts[count($parts) - 1];
 			//optimize image
 			if(file_exists($FilePath)
 				&& !file_exists($SavePath . $FileName)
 			) {
-				$this->CompressImage($FilePath, $SavePath . $FileName, 70);
+				$this->imageCompress($FilePath, $SavePath . $FileName);
 			}
+			$this->imageCompress($FilePath, $SavePath . $FileName);
 			//replace image url
 			if(file_exists($SavePath . $FileName)) {
-				$ImagePathParts = explode($SiteRoot, $link)[1];
-				$ImagePathParts = explode($FileName, $ImagePathParts)[0];
-				$newLink = str_replace($ImagePathParts, "OptimizedImages/", $link);
+				$parts = explode($SiteRoot, $link)[1];
+				$ImagePathParts = explode($FileName, $parts)[0];
+				$newLink = str_replace($ImagePathParts, "/OptimizedImages/", $link);
 				$this->site_code = str_replace($link, $newLink, $this->site_code);
 			}
 		}
@@ -117,21 +154,48 @@ class SiteFaster {
 		$this->site_code = preg_replace('/\t/', "", $this->site_code);
 	}
 	
-	function getSiteCode() {
-		return $this->site_code;
+	function imageCompress($src, $dst) {
+		if($this->isAnimatedPng($src)) {
+			copy($src, $dst);
+			return;
+		}
+		list($width, $height) = getimagesize($src);
+		$type = strtolower(substr(strrchr($src,"."),1));
+		if($type == 'jpeg') $type = 'jpg';
+		switch($type) {
+			case 'jpg' : 
+				$img = imagecreatefromjpeg($src); 
+			break;
+			case 'png' : 
+				$img = imagecreatefrompng($src);
+			break;
+		}
+		$new = imagecreatetruecolor($width, $height);
+		// preserve transparency
+		if($type == "gif" or $type == "png") {
+			imagecolortransparent($new, imagecolorallocatealpha($new, 0, 0, 0, 127));
+			imagealphablending($new, false);
+			imagesavealpha($new, true);
+		}
+		imagecopyresampled($new, $img, 0, 0, 0, 0, $width, $height, $width, $height);
+		switch($type) {
+			case 'jpg': imagejpeg($new, $dst, 70); break;
+			case 'png': imagepng($new, $dst, 9); break;
+		}
+		return true;
 	}
 	
-	function CompressImage($source, $destination, $quality) {
-		$info = getimagesize($source);
-		if ($info['mime'] == 'image/jpeg') 
-			$image = imagecreatefromjpeg($source);
-		elseif ($info['mime'] == 'image/gif') 
-			$image = imagecreatefromgif($source);
-		elseif ($info['mime'] == 'image/png') 
-			$image = imagecreatefrompng($source);
-		imagejpeg($image, $destination, $quality);
-		return $destination;
-	}
+	function isAnimatedPng($src) {
+		$img_bytes = file_get_contents($src);
+		if($img_bytes) {
+			if(strpos(substr($img_bytes, 0, strpos($img_bytes, 'IDAT')), 'acTL') !== false
+				|| strpos($img_bytes, 'GIF89') !== false
+			) {
+				return true;
+			}
+		}
+		return false;
+    }
 }
 
 ?>
