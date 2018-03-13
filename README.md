@@ -2,6 +2,11 @@
 Php script for optimize any existing site code  
 This can help you to get more points from Google Page Speed Insights  
 
+	* Move scripts to the page bottom (also all inline scripts);
+	* Move styles;
+	* Optimize images;
+	* Minify code.
+
 ***
 
 How to optimize

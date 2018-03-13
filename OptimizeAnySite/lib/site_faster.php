@@ -134,12 +134,9 @@ class SiteFaster {
 			) {
 				$this->imageCompress($FilePath, $SavePath . $FileName);
 			}
-			$this->imageCompress($FilePath, $SavePath . $FileName);
-			//replace image url
+			//replace original image url
 			if(file_exists($SavePath . $FileName)) {
-				$parts = explode($SiteRoot, $link)[1];
-				$ImagePathParts = explode($FileName, $parts)[0];
-				$newLink = str_replace($ImagePathParts, "/OptimizedImages/", $link);
+				$newLink = $SiteRoot . '/OptimizedImages/' . $FileName;
 				$this->site_code = str_replace($link, $newLink, $this->site_code);
 			}
 		}
